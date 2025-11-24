@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Variabilité de la mesure & incertitude type A — collaboratif</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Firebase (optionnel pour la collaboration temps réel) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <style>
+    /* Palette conforme RGAA : contrastes élevés pour les textes */
+    :root {
+      --bg: #ffffff;          /* fond principal (blanc) */
+      --panel: #ffffff;       /* panneaux sur fond blanc */
+      --text: #0a0a0a;        /* texte principal (quasi noir) */
+      --muted: #374151;       /* texte secondaire (gris foncé) */
+      --border: #d1d5db;      /* gris clair pour séparateurs */
+      --focus: #1d4ed8;       /* bleu accessible pour focus */
+
+      --btn-bg: #1f2937;      /* boutons principaux */
+      --btn-text: #ffffff;
+      --btn-hover: #111827;
+
+      --btn-danger-bg: #7f1d1d;
+      --btn-danger-text: #ffffff;
+      --btn-danger-hover: #661414;
+
+      --input-bg: #ffffff;
+      --input-text: #111827;
+      --input-border: #6b7280; /* gris 500 pour contraste */
+      --input-placeholder: #4b5563;
+    }
+
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    header {
+      padding: 18px 24px;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: #f3f4f6; /* gris très clair pour contraste avec texte foncé */
+      position: sticky; top: 0; z-index: 10;
+    }
+    header h1 { font-size: 20px; margin: 0; letter-spacing: 0.2px; color: var(--text); }
+    header .tag { font-size: 13px; color: var(--muted); }
+    header .header-left { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    header .header-right { display: flex; align-items: center; }
+    
+    .btn-fullscreen {
+      background: #b45309;
+      padding: 8px 14px;
+      font-size: 13px;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .btn-fullscreen:hover { background: #92400e; }
+    .btn-fullscreen:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+    
+    /* Mode plein écran natif */
+    body:fullscreen, html:fullscreen {
+      width: 100%;
+      height: 100%;
+      background: white;
+      overflow: auto;
+    }
+    body:-webkit-full-screen, html:-webkit-full-screen {
+      width: 100%;
+      height: 100%;
+      background: white;
+      overflow: auto;
+    }
+    body:-moz-full-screen, html:-moz-full-screen {
+      width: 100%;
+      height: 100%;
+      background: white;
+      overflow: auto;
+    }
+    body:-ms-fullscreen, html:-ms-fullscreen {
+      width: 100%;
+      height: 100%;
+      background: white;
+      overflow: auto;
+    }
+
+    .app { display: grid; grid-template-columns: 1fr 1.2fr; gap: 18px; padding: 18px; }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: clip;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .panel h2 {
+      margin: 0; padding: 14px 16px; font-size: 16px; font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      background: #f9fafb;
+    }
+    .panel .body { padding: 14px; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; }
+    thead th { text-align: left; font-size: 13px; color: var(--text); font-weight: 700; padding: 8px; border-bottom: 2px solid var(--border); }
+    tbody td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    input[type="number"], textarea, input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--input-text);
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+    }
+    input[disabled] { background: #f3f4f6; color: #374151; }
+    input::placeholder, textarea::placeholder { color: var(--input-placeholder); }
+    input:focus, textarea:focus { border-color: var(--focus); box-shadow: 0 0 0 3px rgba(29,78,216,0.25); }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .controls .spacer { flex: 1; }
+
+    .btn {
+      appearance: none;
+      border: 1px solid transparent;
+      color: var(--btn-text);
+      background: var(--btn-bg);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn:hover { background: var(--btn-hover); }
+    .btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    .btn.primary { background: #075985; } /* bleu foncé lisible sur blanc */
+    .btn.primary:hover { background: #0c4a6e; }
+
+    .btn.danger { background: var(--btn-danger-bg); color: var(--btn-danger-text); }
+    .btn.danger:hover { background: var(--btn-danger-hover); }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+
+    .stat { background: #f9fafb; border: 1px solid var(--border); padding: 10px; border-radius: 10px; }
+    .stat h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 700; }
+    .stat .value { font-size: 18px; font-weight: 800; color: var(--text); }
+
+    .note { color: var(--muted); font-size: 13px; }
+    .footer { padding: 10px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+
+    kbd { background: #e5e7eb; color: #111827; padding: 2px 6px; border-radius: 4px; border: 1px solid #d1d5db; font-weight: 700; }
+
+    /* Graph container plus grand pour la lisibilité */
+    .chart-wrap { margin-top:14px; border:1px solid #d1d5db; border-radius:12px; padding:10px; height: 520px; min-height: 420px; }
+    #chart { display:block; width:100% !important; height:100% !important; }
+
+    /* Accessibilité supplémentaire */
+    * { scroll-margin-top: 72px; }
+    a { color: #0b5cab; text-decoration: underline; }
+    a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    @media (max-width: 980px) { .app { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <h1>Variabilité de la mesure – Incertitude type A</h1>
+      <span class="tag">Tableau à gauche · Diagramme à droite · Calculs en direct · Collaboration optionnelle</span>
+    </div>
+    <div class="header-right">
+      <button id="fullscreenBtn" class="btn-fullscreen" aria-label="Activer le mode plein écran">Mode plein écran</button>
+    </div>
+  </header>
+
+  <main class="app">
+    <!-- Colonne gauche : Tableau de saisie -->
+    <section class="panel" aria-labelledby="titre-tableau">
+      <h2 id="titre-tableau">Mesures</h2>
+      <div class="body">
+        <div class="controls">
+          <button class="btn" id="addRow">+ Ajouter une ligne</button>
+          <button class="btn" id="add10">+10</button>
+          <button class="btn danger" id="clearAll">Effacer</button>
+          <span class="spacer"></span>
+          <label class="note">Coller en vrac : valeurs séparées par virgule, point-virgule ou retour.</label>
+        </div>
+
+        <table aria-describedby="help-saisie">
+          <thead>
+            <tr>
+              <th style="width: 110px;">Mesure n°</th>
+              <th>Valeur mesurée</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+
+        <div style="margin-top:12px;">
+          <label for="bulk" class="note">Coller des valeurs</label>
+          <textarea id="bulk" rows="3" placeholder="Ex : 10,01\n10,03\n9,98"></textarea>
+        </div>
+        <p id="help-saisie" class="note" style="margin-top:8px;">Astuce : tapez ou collez, tout se met à jour automatiquement.</p>
+      </div>
+      <div class="footer">Clavier : <kbd>Tab</kbd> pour passer à la cellule suivante. Laissez vide pour ignorer une ligne.</div>
+    </section>
+
+    <!-- Colonne droite : Graph + Stats + Session -->
+    <section class="panel" aria-labelledby="titre-graph">
+      <h2 id="titre-graph">Diagramme en bâtons · valeur mesurée (abscisse) vs effectif (ordonnée)</h2>
+      <div class="body">
+        <!-- Contrôles de session collaborative -->
+        <div class="stat" role="group" aria-label="Session collaborative" style="margin-bottom:10px;">
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <label for="room" style="font-weight:700;">Nom de la session :</label>
+            <input id="room" type="text" placeholder="ex : TP-Mesures-A" style="max-width:220px;" />
+            <button id="joinRoom" class="btn primary">Rejoindre</button>
+            <span class="spacer"></span>
+            <span class="note">En ligne : <strong id="online">0</strong></span>
+          </div>
+          <p class="note" style="margin:6px 0 0;">Sans configuration Firebase, la page fonctionne en <strong>mode local</strong> avec sauvegarde automatique dans le navigateur.</p>
+        </div>
+
+        <div class="two-col">
+          <div class="stat">
+            <h3>Nombre de mesures N</h3>
+            <div class="value" id="N">0</div>
+          </div>
+          <div class="stat">
+            <h3>Moyenne</h3>
+            <div class="value" id="mean">—</div>
+          </div>
+        </div>
+        <div class="two-col" style="margin-top:10px;">
+          <div class="stat">
+            <h3>Écart-type (échantillon)</h3>
+            <div class="value" id="std">—</div>
+          </div>
+          <div class="stat">
+            <h3>Incertitude type A (u<sub>A</sub> = s/√N)</h3>
+            <div class="value" id="uA">—</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chart" aria-label="Diagramme en bâtons de la distribution des valeurs mesurées"></canvas>
+        </div>
+      </div>
+      <div class="footer">Les barres affichent l'effectif par valeur. L'écart-type est calculé en <em>N−1</em>.</div>
+    </section>
+  </main>
+
+  <script>
+    // ==========================
+    //  Configuration Firebase (optionnelle)
+    // ==========================
+    const firebaseConfig = {
+      apiKey: "VOTRE_API_KEY",
+      authDomain: "VOTRE_PROJET.firebaseapp.com",
+      databaseURL: "https://VOTRE_PROJET-default-rtdb.firebaseio.com",
+      projectId: "VOTRE_PROJET",
+      storageBucket: "VOTRE_PROJET.appspot.com",
+      messagingSenderId: "VOTRE_ID",
+      appId: "VOTRE_APP_ID"
+    };
+    let fbApp = null, db = null, currentRoom = 'local', writeLock = false, unsubValues = null, unsubPresence = null;
+    const looksConfigured = () => Object.values(firebaseConfig||{}).every(v => typeof v === 'string' && v && !v.includes('VOTRE_'));
+
+    function initFirebaseOnce(){
+      if (fbApp || !looksConfigured()) return false;
+      fbApp = firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      return true;
+    }
+
+    // ==========================
+    //  Utilitaires numériques
+    // ==========================
+    const isFiniteNumber = (x) => typeof x === 'number' && Number.isFinite(x);
+    function parseLocaleNumber(s) {
+      if (!s) return NaN;
+      const t = String(s).trim().replace(/,/g, '.');
+      return Number(t);
+    }
+
+    function buildFrequencies(values, binWidth) {
+      if (!values.length) return { labels: [], counts: [] };
+      const map = new Map();
+      const useBins = isFiniteNumber(binWidth) && binWidth > 0;
+
+      for (const v of values) {
+        let key;
+        if (useBins) {
+          const k = Math.floor(v / binWidth) * binWidth; // bord gauche
+          const decimals = (String(binWidth).split('.')[1] || '').length;
+          key = `${(k).toFixed(decimals)} – ${(k + binWidth).toFixed(decimals)}`;
+        } else {
+          key = String(v);
+        }
+        map.set(key, (map.get(key) || 0) + 1);
+      }
+      const entries = Array.from(map.entries());
+      entries.sort((a, b) => {
+        const pa = parseLocaleNumber(a[0]);
+        const pb = parseLocaleNumber(b[0]);
+        return (isFiniteNumber(pa) && isFiniteNumber(pb)) ? pa - pb : a[0].localeCompare(b[0]);
+      });
+      return { labels: entries.map(e => e[0]), counts: entries.map(e => e[1]) };
+    }
+
+    function stats(values) {
+      const N = values.length;
+      if (!N) return { N: 0, mean: NaN, std: NaN, uA: NaN };
+      const sum = values.reduce((a, b) => a + b, 0);
+      const mean = sum / N;
+      let std = NaN;
+      if (N > 1) {
+        const s2 = values.reduce((acc, x) => acc + (x - mean) ** 2, 0) / (N - 1);
+        std = Math.sqrt(s2);
+      }
+      const uA = isFiniteNumber(std) ? std / Math.sqrt(N) : NaN;
+      return { N, mean, std, uA };
+    }
+
+    // ==========================
+    //  DOM & interactions
+    // ==========================
+    const tbody = document.getElementById('tbody');
+    const bulk = document.getElementById('bulk');
+
+    const NEl = document.getElementById('N');
+    const meanEl = document.getElementById('mean');
+    const stdEl = document.getElementById('std');
+    const uAEl = document.getElementById('uA');
+
+    function addRow() {
+      const i = tbody.children.length + 1;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="number" value="${i}" disabled aria-label="Numéro de mesure ${i}"/></td>
+        <td><input type="number" step="any" inputmode="decimal" placeholder="Saisir une valeur" aria-label="Valeur mesurée ${i}"/></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function addRows(n = 1) { for (let k = 0; k < n; k++) addRow(); }
+
+    function clearAllLocal() {
+      tbody.innerHTML = '';
+      addRows(10);
+      updateLocal();
+    }
+
+    function readValuesFromDOM() {
+      const values = [];
+      Array.from(tbody.querySelectorAll('tr')).forEach((tr) => {
+        const input = tr.querySelectorAll('input')[1];
+        const v = parseLocaleNumber(input.value);
+        if (Number.isFinite(v)) values.push(v);
+      });
+      return values;
+    }
+
+    function renderValuesToDOM(values){
+      // ajuste le nombre de lignes
+      const needed = Math.max(10, values.length);
+      tbody.innerHTML = '';
+      for (let i=0;i<needed;i++) addRow();
+      // applique les valeurs
+      // Sélectionne STRICTEMENT la 2e colonne (évite le bug : :last-child matchait aussi la 1re colonne)
+      const inputs = tbody.querySelectorAll("tr td:nth-child(2) input");
+      values.forEach((v, idx) => { if (inputs[idx]) inputs[idx].value = v; });
+    }
+
+    function formatNumber(x) {
+      if (!Number.isFinite(x)) return '—';
+      return Number(x).toLocaleString('fr-FR', { maximumSignificantDigits: 6 });
+    }
+
+    // Chart.js setup
+    const ctx = document.getElementById('chart');
+    const chart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: [], datasets: [{ label: 'Effectif', data: [], borderWidth: 1 }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout:{ padding:{ left:8,right:16,top:8,bottom:8 } },
+        scales: {
+          x: { title: { display: true, text: 'Valeur mesurée' }, ticks:{ maxRotation:0, autoSkip:true, maxTicksLimit:12 } },
+          y: { title: { display: true, text: 'Effectif' }, beginAtZero: true, ticks: { precision: 0 } }
+        },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `Effectif : ${ctx.parsed.y}` } } }
+      }
+    });
+
+    function updateLocal() {
+      const values = readValuesFromDOM();
+      const { labels, counts } = buildFrequencies(values, undefined);
+
+      const { N, mean, std, uA } = stats(values);
+      NEl.textContent = N; meanEl.textContent = formatNumber(mean); stdEl.textContent = formatNumber(std); uAEl.textContent = formatNumber(uA);
+
+      chart.data.labels = labels; chart.data.datasets[0].data = counts; chart.update();
+    }
+
+    // ==========================
+    //  Sauvegarde locale (par session)
+    // ==========================
+    function localKey(){ return `typeA::${currentRoom || 'local'}`; }
+    function saveLocal(){
+      const state = { values: readValuesFromDOM() };
+      try { localStorage.setItem(localKey(), JSON.stringify(state)); } catch(e){}
+    }
+    function loadLocal(){
+      try { const raw = localStorage.getItem(localKey()); return raw ? JSON.parse(raw) : null; } catch(e){ return null; }
+    }
+
+    // ==========================
+    //  Collaboration Firebase
+    // ==========================
+    function valuesRef(){ return db.ref(`rooms/${currentRoom}/typeA`); }
+    function presenceRef(){ return db.ref(`rooms/${currentRoom}/presence`); }
+
+    function bindPresence(){
+      const onlineEl = document.getElementById('online');
+      const myConn = presenceRef().push();
+      myConn.onDisconnect().remove();
+      myConn.set(true);
+      presenceRef().on('value', snap => { const val = snap.val() || {}; onlineEl.textContent = Object.keys(val).length; });
+    }
+
+    function bindRoom(room){
+      // d'abord : appliquer l'état local pour un affichage immédiat
+      currentRoom = room || 'local';
+      const local = loadLocal();
+      if (local){
+        if (Array.isArray(local.values)) renderValuesToDOM(local.values);
+        updateLocal();
+      } else { clearAllLocal(); }
+
+      if (looksConfigured()) initFirebaseOnce();
+      if (!db) return; // mode local uniquement
+
+      // écoute temps réel
+      valuesRef().on('value', snap => {
+        const remote = snap && snap.val();
+        if (!remote) return; // rien côté serveur
+        writeLock = true;
+        if (Array.isArray(remote.values)) renderValuesToDOM(remote.values);
+        updateLocal();
+        writeLock = false;
+      });
+
+      // présence
+      bindPresence();
+    }
+
+    function pushFirebase(){
+      if (!db || writeLock) return;
+      const payload = { values: readValuesFromDOM() };
+      valuesRef().set(payload);
+    }
+    let pushTimer=null; function pushFirebaseDebounced(){ clearTimeout(pushTimer); pushTimer=setTimeout(pushFirebase, 150); }
+
+    // ==========================
+    //  Événements UI
+    // ==========================
+    document.getElementById('addRow').addEventListener('click', ()=>{ addRow(); updateLocal(); saveLocal(); pushFirebaseDebounced(); });
+    document.getElementById('add10').addEventListener('click', ()=>{ addRows(10); updateLocal(); saveLocal(); pushFirebaseDebounced(); });
+    document.getElementById('clearAll').addEventListener('click', ()=>{ clearAllLocal(); saveLocal(); pushFirebaseDebounced(); });
+
+    tbody.addEventListener('input', ()=>{ updateLocal(); saveLocal(); pushFirebaseDebounced(); });
+
+    function importBulk() {
+      const text = bulk.value.trim(); if (!text) return;
+      const parts = text.split(/[,;\s]+/).map(parseLocaleNumber).filter(Number.isFinite);
+      if (!parts.length) return;
+      renderValuesToDOM(parts); updateLocal();
+    }
+
+    // Démarrage : 10 lignes + room locale
+    addRows(10); updateLocal();
+
+    document.getElementById('joinRoom').addEventListener('click', ()=>{
+      const room = (document.getElementById('room').value || '').trim() || 'public';
+      bindRoom(room);
+      // s'il n'existe rien côté serveur et qu'on a un état local, on le pousse
+      if (db && looksConfigured()) pushFirebase();
+    });
+
+    // par défaut en local
+    bindRoom('local');
+
+    // ==========================
+    //  Mode plein écran
+    // ==========================
+    document.getElementById('fullscreenBtn').addEventListener('click', () => {
+      const btn = document.getElementById('fullscreenBtn');
+      
+      // Vérifier si on est déjà en plein écran
+      if (document.fullscreenElement || document.webkitFullscreenElement || 
+          document.mozFullScreenElement || document.msFullscreenElement) {
+        // Quitter le plein écran
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      } else {
+        // Entrer en plein écran
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+          elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+          elem.msRequestFullscreen();
+        }
+      }
+    });
+
+    // Mettre à jour le texte du bouton selon l'état
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+    document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+    document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+
+    function updateFullscreenButton() {
+      const btn = document.getElementById('fullscreenBtn');
+      if (document.fullscreenElement || document.webkitFullscreenElement || 
+          document.mozFullScreenElement || document.msFullscreenElement) {
+        btn.textContent = 'Quitter plein écran';
+      } else {
+        btn.textContent = 'Mode plein écran';
+      }
+    }
+  </script>
+</body>
+</html>
