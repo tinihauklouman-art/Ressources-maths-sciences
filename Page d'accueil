@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ressources Maths-Sciences - Lycée Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      line-height: 1.6;
+    }
+    header {
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 1.5rem;
+    }
+    h1 {
+      margin-bottom: 0.2rem;
+    }
+    nav a {
+      margin-right: 1rem;
+    }
+    .bloc {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .niveau {
+      font-size: 0.9rem;
+      font-weight: bold;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ressources Maths-Sciences</h1>
+    <p>Lycée professionnel – Secteur industriel</p>
+    <nav>
+      <a href="#2nde">2nde</a>
+      <a href="#1ere">1ère</a>
+      <a href="#terminale">Terminale</a>
+      <a href="#prof">Espace prof</a>
+    </nav>
+  </header>
+
+  <section id="2nde">
+    <h2>Ressources 2nde</h2>
+
+    <div class="bloc">
+      <div class="niveau">Séquence</div>
+      <h3>Énergie & puissance électrique</h3>
+      <ul>
+        <li><a href="docs/2nde/energie-puissance/cours.pdf">Cours (PDF)</a></li>
+        <li><a href="docs/2nde/energie-puissance/activites.pdf">Activités élève</a></li>
+        <li><a href="docs/2nde/energie-puissance/evaluation.pdf">Évaluation sommative</a></li>
+      </ul>
+    </div>
+
+    <div class="bloc">
+      <div class="niveau">Séquence</div>
+      <h3>Mesure & incertitude</h3>
+      <ul>
+        <li><a href="docs/2nde/mesure-incertitude/cours.pdf">Cours</a></li>
+        <li><a href="docs/2nde/mesure-incertitude/tp1.pdf">TP1</a></li>
+        <li><a href="docs/2nde/mesure-incertitude/tp2.pdf">TP2</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="1ere">
+    <h2>Ressources 1ère</h2>
+    <p>À compléter…</p>
+  </section>
+
+  <section id="terminale">
+    <h2>Ressources Terminale</h2>
+    <p>À compléter…</p>
+  </section>
+
+  <section id="prof">
+    <h2>Espace professeur</h2>
+    <ul>
+      <li><a href="docs/progression/progression-annuelle.pdf">Progression annuelle</a></li>
+      <li><a href="docs/grilles/grille-competences.pdf">Grille de compétences</a></li>
+      <li><a href="docs/divers/liens-utiles.html">Liens utiles</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>Site créé avec GitHub Pages – Auteur : T. Klouman</p>
+  </footer>
+</body>
+</html>
