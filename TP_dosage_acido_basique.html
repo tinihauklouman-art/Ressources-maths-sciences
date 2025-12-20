@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TP Dosage Acido-Basique — Vinaigre Blanc</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --text: #0a0a0a;
+      --muted: #374151;
+      --border: #d1d5db;
+      --focus: #1d4ed8;
+      --success: #065f46;
+      --success-bg: #d1fae5;
+      --warning: #92400e;
+      --warning-bg: #fef3c7;
+      --danger: #991b1b;
+      --danger-bg: #fee2e2;
+      --info: #1e40af;
+      --info-bg: #dbeafe;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
+      color: var(--text);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 28px;
+      color: #1f2937;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 16px;
+      margin: 0;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      margin: 0 0 16px 0;
+      font-size: 20px;
+      color: #1f2937;
+      font-weight: 600;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 8px;
+    }
+
+    .card h3 {
+      margin: 16px 0 12px 0;
+      font-size: 16px;
+      color: #374151;
+      font-weight: 600;
+    }
+
+    .problematique {
+      background: var(--info-bg);
+      border-left: 4px solid var(--info);
+      padding: 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+      font-weight: 500;
+    }
+
+    .setup-image {
+      width: 100%;
+      max-width: 400px;
+      margin: 20px auto;
+      display: block;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .info-box {
+      background: var(--info-bg);
+      border: 1px solid var(--info);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+
+    .warning-box {
+      background: var(--warning-bg);
+      border: 1px solid var(--warning);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+
+    .success-box {
+      background: var(--success-bg);
+      border: 1px solid var(--success);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+
+    .danger-box {
+      background: var(--danger-bg);
+      border: 1px solid var(--danger);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+
+    .protocol-step {
+      background: #f9fafb;
+      border-left: 3px solid #667eea;
+      padding: 12px 16px;
+      margin: 8px 0;
+      border-radius: 4px;
+    }
+
+    .protocol-step strong {
+      color: #667eea;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th {
+      background: #667eea;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .formula {
+      background: #1f2937;
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      margin: 12px 0;
+      text-align: center;
+      font-size: 18px;
+    }
+
+    .result-highlight {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      margin: 16px 0;
+      font-size: 20px;
+      font-weight: 700;
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    }
+
+    .calculation {
+      background: #f3f4f6;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 8px 0;
+      font-family: 'Courier New', monospace;
+    }
+
+    .conclusion {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 24px;
+      border-radius: 12px;
+      margin: 20px 0;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+    }
+
+    .conclusion h3 {
+      margin: 0 0 12px 0;
+      color: white;
+      font-size: 22px;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    ul {
+      margin: 8px 0;
+      padding-left: 24px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      .result-highlight {
+        font-size: 16px;
+      }
+    }
+
+    .canvas-container {
+      position: relative;
+      height: 400px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🧪 TP Dosage Acido-Basique : Analyse du Vinaigre Blanc</h1>
+      <p class="subtitle">Détermination de la concentration en acide éthanoïque (CH₃COOH)</p>
+    </header>
+
+    <div class="main-content">
+      <!-- Partie gauche : Contexte et protocole -->
+      <div class="card">
+        <h2>📋 Contexte et Problématique</h2>
+
+        <h3>🎯 Situation</h3>
+        <p>Le vinaigre blanc utilisé en cuisine contient de l'acide éthanoïque (CH₃COOH). Pour être consommable, sa concentration molaire en acide éthanoïque doit être <strong>supérieure à 1,25 mol/L</strong>.</p>
+
+        <div class="info-box">
+          <strong>📦 Matériel disponible :</strong> Un vinaigre blanc de concentration inconnue
+        </div>
+
+        <div class="problematique">
+          <strong>❓ Problématique :</strong><br>
+          Peut-on conclure avec certitude que la concentration en acide éthanoïque est supérieure à 1,25 mol/L, en tenant compte des incertitudes de mesure des instruments ?
+        </div>
+
+        <h3>⚗️ Principe du dosage</h3>
+        <p>Nous réalisons un <strong>dosage acido-basique</strong> par titrage pH-métrique :</p>
+        <ul>
+          <li><strong>Solution titrée :</strong> Vinaigre dilué (acide éthanoïque)</li>
+          <li><strong>Solution titrante :</strong> Hydroxyde de sodium (NaOH) à 0,10 mol/L</li>
+          <li><strong>Détection :</strong> pH-mètre ou indicateur coloré</li>
+        </ul>
+
+        <div class="info-box">
+          <strong>🔬 Équation de réaction :</strong><br>
+          CH₃COOH + NaOH → CH₃COONa + H₂O
+        </div>
+      </div>
+
+      <!-- Partie droite : Montage expérimental -->
+      <div class="card">
+        <h2>🔧 Montage Expérimental</h2>
+
+        <img src="https://i.imgur.com/9KXqZ8Y.png" alt="Montage de dosage acido-basique" class="setup-image">
+
+        <h3>📝 Légende du montage</h3>
+        <ul>
+          <li><strong>Burette graduée :</strong> Contient la solution de NaOH (0,10 mol/L)</li>
+          <li><strong>Erlenmeyer :</strong> Contient le vinaigre dilué + indicateur coloré</li>
+          <li><strong>Agitateur magnétique :</strong> Assure l'homogénéisation</li>
+          <li><strong>pH-mètre :</strong> Mesure le pH en continu</li>
+          <li><strong>Support et pince :</strong> Maintien de la burette</li>
+        </ul>
+
+        <div class="warning-box">
+          <strong>⚠️ Sécurité :</strong>
+          <ul style="margin: 8px 0;">
+            <li>Porter des lunettes de protection</li>
+            <li>Manipuler la soude avec précaution (corrosif)</li>
+            <li>Rincer immédiatement en cas de contact</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Protocole expérimental -->
+      <div class="card full-width">
+        <h2>🔬 Protocole Expérimental</h2>
+
+        <div class="protocol-step">
+          <strong>Étape 1 :</strong> Dilution du vinaigre
+          <ul>
+            <li>Prélever 10,0 mL de vinaigre avec une pipette jaugée</li>
+            <li>Diluer dans une fiole jaugée de 100,0 mL avec de l'eau distillée</li>
+            <li>Facteur de dilution : <strong>F = 10</strong></li>
+          </ul>
+        </div>
+
+        <div class="protocol-step">
+          <strong>Étape 2 :</strong> Préparation du dosage
+          <ul>
+            <li>Prélever 10,0 mL de vinaigre dilué dans un erlenmeyer</li>
+            <li>Ajouter environ 20 mL d'eau distillée</li>
+            <li>Ajouter quelques gouttes d'indicateur coloré (phénolphtaléine ou BBT)</li>
+            <li>Placer l'erlenmeyer sur l'agitateur magnétique</li>
+          </ul>
+        </div>
+
+        <div class="protocol-step">
+          <strong>Étape 3 :</strong> Réalisation du dosage
+          <ul>
+            <li>Remplir la burette avec la solution de NaOH (0,10 mol/L)</li>
+            <li>Noter le volume initial V₀</li>
+            <li>Verser progressivement la soude en agitant</li>
+            <li>Repérer l'équivalence : changement de couleur ou saut de pH</li>
+            <li>Noter le volume équivalent V<sub>E</sub></li>
+          </ul>
+        </div>
+
+        <div class="protocol-step">
+          <strong>Étape 4 :</strong> Répétitions
+          <ul>
+            <li>Réaliser au moins 3 dosages pour minimiser les incertitudes</li>
+            <li>Calculer la moyenne des volumes équivalents</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Résultats expérimentaux -->
+      <div class="card full-width">
+        <h2>📊 Résultats Expérimentaux</h2>
+
+        <h3>Mesures effectuées</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Essai n°</th>
+              <th>Volume NaOH versé V<sub>E</sub> (mL)</th>
+              <th>pH à l'équivalence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>13,2</td>
+              <td>8,7</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>13,5</td>
+              <td>8,8</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>13,4</td>
+              <td>8,7</td>
+            </tr>
+            <tr style="background: #667eea; color: white; font-weight: 600;">
+              <td>Moyenne</td>
+              <td>13,37 mL</td>
+              <td>8,73</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="info-box">
+          <strong>📏 Incertitudes des instruments :</strong>
+          <ul style="margin: 8px 0;">
+            <li>Burette graduée (25 mL) : U(V) = ±0,05 mL</li>
+            <li>Pipette jaugée (10 mL) : U(V) = ±0,02 mL</li>
+            <li>Fiole jaugée (100 mL) : U(V) = ±0,08 mL</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Exploitation -->
+      <div class="card">
+        <h2>🧮 Exploitation des Résultats</h2>
+
+        <h3>1️⃣ Calcul de la concentration du vinaigre dilué</h3>
+
+        <div class="formula">
+          C<sub>acide</sub> × V<sub>acide</sub> = C<sub>base</sub> × V<sub>E</sub>
+        </div>
+
+        <div class="calculation">
+          C<sub>dilué</sub> = (C<sub>NaOH</sub> × V<sub>E</sub>) / V<sub>acide</sub><br>
+          C<sub>dilué</sub> = (0,10 × 13,37) / 10,0<br>
+          C<sub>dilué</sub> = 0,1337 mol/L
+        </div>
+
+        <h3>2️⃣ Calcul de la concentration du vinaigre pur</h3>
+
+        <div class="formula">
+          C<sub>vinaigre</sub> = C<sub>dilué</sub> × Facteur de dilution
+        </div>
+
+        <div class="calculation">
+          C<sub>vinaigre</sub> = 0,1337 × 10<br>
+          C<sub>vinaigre</sub> = 1,337 mol/L
+        </div>
+
+        <div class="result-highlight">
+          📈 Concentration mesurée :<br>
+          C = 1,34 mol/L
+        </div>
+
+        <h3>3️⃣ Calcul de l'incertitude</h3>
+
+        <div class="calculation">
+          Incertitude type A (répétabilité) :<br>
+          u<sub>A</sub> = écart-type / √n = 0,015 mol/L<br><br>
+
+          Incertitude type B (instruments) :<br>
+          u<sub>B</sub> = 0,008 mol/L<br><br>
+
+          Incertitude composée :<br>
+          u<sub>c</sub> = √(u<sub>A</sub>² + u<sub>B</sub>²) = 0,017 mol/L<br><br>
+
+          Incertitude élargie (k=2, niveau 95%) :<br>
+          U = 2 × u<sub>c</sub> = <strong>0,03 mol/L</strong>
+        </div>
+      </div>
+
+      <!-- Comparaison -->
+      <div class="card">
+        <h2>📐 Comparaison avec la Norme</h2>
+
+        <div class="canvas-container">
+          <canvas id="comparisonChart"></canvas>
+        </div>
+
+        <h3>Analyse de compatibilité</h3>
+
+        <div class="info-box">
+          <strong>Résultat de mesure :</strong><br>
+          C = (1,34 ± 0,03) mol/L<br>
+          Intervalle de confiance à 95% : [1,31 ; 1,37] mol/L
+        </div>
+
+        <div class="warning-box">
+          <strong>Norme réglementaire :</strong><br>
+          C<sub>min</sub> = 1,25 mol/L
+        </div>
+
+        <div class="calculation">
+          <strong>Vérification :</strong><br>
+          C<sub>mesurée</sub> - U = 1,34 - 0,03 = 1,31 mol/L<br>
+          1,31 mol/L > 1,25 mol/L ✓
+        </div>
+
+        <div class="success-box">
+          <strong>✅ Conclusion partielle :</strong><br>
+          Même en tenant compte de l'incertitude de mesure, la concentration minimale possible (1,31 mol/L) reste supérieure à la limite réglementaire (1,25 mol/L).
+        </div>
+      </div>
+
+      <!-- Conclusion finale -->
+      <div class="card full-width">
+        <div class="conclusion">
+          <h3>✅ CONCLUSION FINALE</h3>
+
+          <p style="font-size: 18px; line-height: 1.8;">
+            <strong>Réponse à la problématique :</strong><br>
+            Oui, nous pouvons conclure avec certitude que la concentration en acide éthanoïque du vinaigre blanc analysé est supérieure à 1,25 mol/L.
+          </p>
+
+          <div style="background: rgba(255,255,255,0.2); padding: 16px; border-radius: 8px; margin-top: 16px;">
+            <strong>Justification :</strong>
+            <ul style="text-align: left; margin: 12px 0;">
+              <li>Concentration mesurée : C = 1,34 mol/L</li>
+              <li>Incertitude élargie : U = 0,03 mol/L (niveau de confiance 95%)</li>
+              <li>Intervalle de confiance : [1,31 ; 1,37] mol/L</li>
+              <li>La borne inférieure (1,31 mol/L) dépasse la norme (1,25 mol/L)</li>
+              <li><strong>Écart de sécurité : 0,06 mol/L au-dessus de la limite</strong></li>
+            </ul>
+          </div>
+
+          <p style="margin-top: 16px; font-size: 16px;">
+            Le vinaigre blanc testé est <strong>conforme pour la consommation alimentaire</strong>.
+          </p>
+        </div>
+
+        <h3 style="margin-top: 24px;">💡 Points clés à retenir</h3>
+        <div class="info-box">
+          <ul style="margin: 8px 0;">
+            <li><strong>Dosage acido-basique :</strong> Méthode quantitative précise pour déterminer une concentration</li>
+            <li><strong>Équivalence :</strong> Point où les réactifs sont en proportions stœchiométriques</li>
+            <li><strong>Incertitudes :</strong> Toujours prendre en compte les incertitudes pour valider un résultat</li>
+            <li><strong>Répétabilité :</strong> Réaliser plusieurs mesures améliore la fiabilité</li>
+            <li><strong>Comparaison :</strong> Un résultat n'est valide que s'il tient compte des incertitudes</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Graphique de comparaison
+    const ctx = document.getElementById('comparisonChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Norme minimale', 'Vinaigre mesuré (min)', 'Vinaigre mesuré', 'Vinaigre mesuré (max)'],
+        datasets: [{
+          label: 'Concentration (mol/L)',
+          data: [1.25, 1.31, 1.34, 1.37],
+          backgroundColor: [
+            'rgba(239, 68, 68, 0.7)',   // Rouge pour norme
+            'rgba(34, 197, 94, 0.7)',   // Vert pour min
+            'rgba(102, 126, 234, 0.8)', // Bleu pour mesure
+            'rgba(34, 197, 94, 0.7)'    // Vert pour max
+          ],
+          borderColor: [
+            'rgba(239, 68, 68, 1)',
+            'rgba(34, 197, 94, 1)',
+            'rgba(102, 126, 234, 1)',
+            'rgba(34, 197, 94, 1)'
+          ],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: 'Comparaison avec la norme réglementaire',
+            font: {
+              size: 16,
+              weight: 'bold'
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 1.5,
+            ticks: {
+              callback: function(value) {
+                return value.toFixed(2) + ' mol/L';
+              }
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
